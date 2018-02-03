@@ -10,9 +10,9 @@ Then fire up Elasticsearch using the following Docker command:
 
 Test that all is well:
 
-`http://localhost:9200`
+`curl http://localhost:9200`
 
-For more details chekc the [Elastic Online Gude](https://www.elastic.co/guide/en/elasticsearch/reference/6.1/docker.html)
+For more details chekc the [Elastic Online Guide](https://www.elastic.co/guide/en/elasticsearch/reference/6.1/docker.html)
 
 ## Mapping
 
@@ -29,5 +29,5 @@ To create the mapping for the year type in Elasticsearch run the following curl 
 			}
 		}
 	}
-}
+}'
 `
