@@ -20,7 +20,7 @@ We will use the [Movielens dataset](https://grouplens.org/datasets/movielens/). 
 
 To create the mapping for the year type in Elasticsearch run the following curl command:
 
-`curl -H "Content-Type: application/json" -XPUT http://localhost:9200/movies -d
+```curl -H "Content-Type: application/json" -XPUT http://localhost:9200/movies -d
 '{
 	"mappings": {
 		"movie": {
@@ -30,7 +30,7 @@ To create the mapping for the year type in Elasticsearch run the following curl 
 		}
 	}
 }'
-`
+```
 
 Check that the mapping was correctly loaded by getting it back using the following command:
 
@@ -38,13 +38,13 @@ Check that the mapping was correctly loaded by getting it back using the followi
 
 ## Insert a single movie
 
-`curl -H "Content-Type: application/json" -XPUT http://localhost:9200/movies/movie/109487 -d'
+```curl -H "Content-Type: application/json" -XPUT http://localhost:9200/movies/movie/109487 -d'
 {
 		"genre": ["Sci-Fi","IMAX"],
 		"title": "Interstellar",
 		"year": 2014
 }'
-`
+```
 
 Check to see if the new movie was successfully added by running:
 
@@ -64,13 +64,14 @@ Then run the following command to import as bulk:
 
 Run the following command to update the title of movie id: 109487
 
-`curl -H "Content-Type: application/json" -XPOST http://localhost:9200/movies/movie/109487/_update -d'
+```
+curl -H "Content-Type: application/json" -XPOST http://localhost:9200/movies/movie/109487/_update -d'
 {
 	"doc": {
 		"title": "Interstella Woo!"
 	}
 }
-'`
+'```
 
 ## Delete a movie
 
@@ -84,14 +85,14 @@ If a document is open by client/user (A) and is updated by another client/user (
 
 The way, around this issue is to provide a `retry_on_confilict` param stating the number of times to retry, togther with the update statement as follows:
 
-`  
+``` 
 	curl -H "Content-Type: application/json" -XPOST http://localhost:9200/movies/movie/109487/_update?retry_on_conflict=5 -d'
 	{
 	  "doc": {
 		  "title": "Interstella Foo!"
 	  }
 	}'
-`
+```
 
 
 
