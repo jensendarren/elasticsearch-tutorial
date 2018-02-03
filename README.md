@@ -21,8 +21,8 @@ We will use the [Movielens dataset](https://grouplens.org/datasets/movielens/). 
 To create the mapping for the year type in Elasticsearch run the following curl command:
 
 ```
-curl -H "Content-Type: application/json" -XPUT http://localhost:9200/movies -d
-'{
+curl -H "Content-Type: application/json" -XPUT http://localhost:9200/movies -d '
+{
 	"mappings": {
 		"movie": {
 			"properties": {
@@ -40,7 +40,7 @@ Check that the mapping was correctly loaded by getting it back using the followi
 ## Insert a single movie
 
 ```
-curl -H "Content-Type: application/json" -XPUT http://localhost:9200/movies/movie/109487 -d'
+curl -H "Content-Type: application/json" -XPUT http://localhost:9200/movies/movie/109487 -d '
 {
 		"genre": ["Sci-Fi","IMAX"],
 		"title": "Interstellar",
@@ -67,13 +67,12 @@ Then run the following command to import as bulk:
 Run the following command to update the title of movie id: 109487
 
 ```
-curl -H "Content-Type: application/json" -XPOST http://localhost:9200/movies/movie/109487/_update -d'
+curl -H "Content-Type: application/json" -XPOST http://localhost:9200/movies/movie/109487/_update -d '
 {
 	"doc": {
 		"title": "Interstella Woo!"
 	}
-}
-'
+}'
 ```
 
 ## Delete a movie
@@ -89,14 +88,74 @@ If a document is open by client/user (A) and is updated by another client/user (
 The way, around this issue is to provide a `retry_on_confilict` param stating the number of times to retry, togther with the update statement as follows:
 
 ``` 
-	curl -H "Content-Type: application/json" -XPOST http://localhost:9200/movies/movie/109487/_update?retry_on_conflict=5 -d'
-	{
-	  "doc": {
-		  "title": "Interstella Foo!"
-	  }
-	}'
+curl -H "Content-Type: application/json" -XPOST http://localhost:9200/movies/movie/109487/_update?retry_on_conflict=5 -d '
+{
+  "doc": {
+	  "title": "Interstella Foo!"
+  }
+}'
 ```
 
+## Using Analyzers 
+
+Firstly lets try some searches. First lets try a match search for 'Star Trek':
+
+```
+curl -H "Content-Type: application/json" -XGET http://localhost:9200/movies/movie/_search?pretty -d '
+{
+	"query": {
+		"match": { 
+			"title": "Star Trek" 
+		}
+	}
+}'
+```
+
+You will notice that Star Wars is listed as well as Star Trek. This is becuase the analyser used is the default full text / partial match analyser. Additionally, Star Wars appears above (with more relevance) than Star Trek due to the small number of documents across many shards. A larger corpus of documents will fix/improve the relevancy.
+
+Let's search for a genre of 'sci' as follows:
+
+```
+curl -H "Content-Type: application/json" -XGET http://localhost:9200/movies/movie/_search?pretty -d '
+{
+	"query": {
+		"match_phrase": { 
+			"genre": "sci" 
+		}
+	}
+}'
+```
+
+You will notice that the results might not be as expected since the results are *all* films with 'sci' such as 'Sci-Fi'. The *expected* results for requesting a phrase match of 'sci' might be zero documents.
+
+We can fix these issues by specifying analysers to use at the mapping. To do this we need to delete our entire index, update the mapping and reindex the documents again.
+
+To delete the index run this command:
+
+`curl -H "Content-Type: application/json" -XDELETE http://localhost:9200/movies`
+
+Then update the mappings as follows:
+
+```
+curl -H "Content-Type: application/json" -XPUT http://localhost:9200/movies -d '
+{
+	"mappings": {
+		"movie": {
+			"properties": {
+				"id": { "type": "integer"},
+				"year": { "type": "date"},
+				"genre": { "type": "keyword" },
+				"title": { "type": "text", "analyzer": "english"}
+			}
+		}
+	}
+}'
+```
+
+So to recap what just happend here:
+
+* For string/text fields that should be *exact matches* then define as a `keyword` mapping
+* For string/text fields that should be *partial matches based on relevance* then define as a `text` mapping together with an optional anayzer like 'english'.
 
 
 
