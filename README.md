@@ -20,7 +20,8 @@ We will use the [Movielens dataset](https://grouplens.org/datasets/movielens/). 
 
 To create the mapping for the year type in Elasticsearch run the following curl command:
 
-```curl -H "Content-Type: application/json" -XPUT http://localhost:9200/movies -d
+```
+curl -H "Content-Type: application/json" -XPUT http://localhost:9200/movies -d
 '{
 	"mappings": {
 		"movie": {
@@ -38,7 +39,8 @@ Check that the mapping was correctly loaded by getting it back using the followi
 
 ## Insert a single movie
 
-```curl -H "Content-Type: application/json" -XPUT http://localhost:9200/movies/movie/109487 -d'
+```
+curl -H "Content-Type: application/json" -XPUT http://localhost:9200/movies/movie/109487 -d'
 {
 		"genre": ["Sci-Fi","IMAX"],
 		"title": "Interstellar",
@@ -71,7 +73,8 @@ curl -H "Content-Type: application/json" -XPOST http://localhost:9200/movies/mov
 		"title": "Interstella Woo!"
 	}
 }
-'```
+'
+```
 
 ## Delete a movie
 
