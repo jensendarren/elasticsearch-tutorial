@@ -157,6 +157,67 @@ So to recap what just happend here:
 * For string/text fields that should be *exact matches* then define as a `keyword` mapping
 * For string/text fields that should be *partial matches based on relevance* then define as a `text` mapping together with an optional anayzer like 'english'.
 
+## Data Modelling in Elasticsearch
+
+Let's start with a parent -> child relationship for franchised movie collections. First up let's create a mapping:
+
+```
+curl -H "Content-Type: application/json" -XPUT http://localhost:9200/series -d '
+{
+	"mappings": {
+		"movie": {
+			"properties": {
+				"film_to_franchise": { "type": "join", "relations": { "franchise" : "film" } }
+			}
+		}
+	}
+}'
+```
+
+Now we can query for all the movies that belong to a particular franchise 'Star Wars':
+
+```
+curl -H "Content-Type: application/json" -XGET http://localhost:9200/series/movie/_search?pretty -d '
+{
+	"query": {
+		"has_parent": { 
+			"parent_type": "franchise",
+			"query": {
+				"match": { "title": "Star Wars" }
+			} 
+		}
+	}
+}'
+```
+
+Or query for the franchise of a particular film by title, like so:
+
+```
+curl -H "Content-Type: application/json" -XGET http://localhost:9200/series/movie/_search?pretty -d '
+{
+	"query": {
+		"has_child": { 
+			"type": "film",
+			"query": {
+				"match": { "title": "The Force Awakens" }
+			} 
+		}
+	}
+}'
+```
+
+## Query Lite / URI Search
+
+Short hand query syntax - useful for debugging and testing out search. Some examples (whcih can also be executed directly in a browser):
+
+`curl http://localhost:9200/movies/movie/_search?q=title:star`
+`curl http://localhost:9200/movies/movie/_search?q=title:trek&explain=true`
+
+For more details, refer to the [Elasticsearch URI Search Documentation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-uri-request.html)
+
+**NOTE**: Do not use this approach in Production. It's easy to break, URL may need to be encoded, is a seurity risk, its very fragile.
+
+
 
 
 
