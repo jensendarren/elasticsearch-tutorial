@@ -375,20 +375,63 @@ curl -H "Content-Type: application/json" -XGET http://localhost:9200/movies/movi
 }'
 ```
 
+## Fuzzy queries
 
+Note the following query will not match any results because 'Intersteller' is spelt incorrectly (last 'e' should be an 'a').
 
+```
+curl -H "Content-Type: application/json" -XGET http://localhost:9200/movies/movie/_search?pretty -d '
+{
+	"query": {
+		"match": { 
+			"title": "Intersteller" 
+		}
+	}
+}'
+```
 
+Use a fuzzy query if we want to allow for a tollerance of mispelt search terms, like so:
 
+```
+curl -H "Content-Type: application/json" -XGET http://localhost:9200/movies/movie/_search?pretty -d '
+{
+	"query": {
+		"fuzzy": { 
+			"title": {"value": "intersteller", "fuzziness": 1 }
+		}
+	}
+}'
+```
 
+## Partial matching
 
+Prefix query (basically is a *starts with* query). 
 
+For example, show results where the title (the `raw` sub field, of course!) *starts with* 'Star'
 
+```
+curl -H "Content-Type: application/json" -XGET http://localhost:9200/movies/movie/_search?pretty -d '
+{
+	"query": {
+		"prefix": { 
+			"title.raw": "Star"
+		}
+	}
+}'
+```
 
+Wildcard query example
 
-
-
-
-
+```
+curl -H "Content-Type: application/json" -XGET http://localhost:9200/movies/movie/_search?pretty -d '
+{
+	"query": {
+		"wildcard": { 
+			"title.raw": "Plan *"
+		}
+	}
+}'
+```
 
 
 
