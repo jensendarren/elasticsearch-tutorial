@@ -219,7 +219,7 @@ For more details, refer to the [Elasticsearch URI Search Documentation](https://
 
 **NOTE**: Do not use this approach in Production. It's easy to break, URL may need to be encoded, is a seurity risk, its very fragile.
 
-## Request body JSON search
+## Queries and Filters
 
 Things you can do within a query
 
@@ -292,11 +292,11 @@ curl -H "Content-Type: application/json" -XGET http://localhost:9200/movies/movi
 
 ## Pagination
 
-Via a url
+Via a URL
 
 `http://localhost:9200/movies/movie/_search?size=4&from=2`
 
-Via the query body
+Via the JSON body payload of a GET request
 
 ```
 curl -H "Content-Type: application/json" -XGET http://localhost:9200/movies/movie/_search?pretty -d '
@@ -308,6 +308,86 @@ curl -H "Content-Type: application/json" -XGET http://localhost:9200/movies/movi
 	}
 }'
 ```
+
+## Sorting
+
+Some examples of sorting:
+
+Via a URL
+
+`http://localhost:9200/movies/movie/_search?sort=year`
+
+Sorting works out of the box for things like integers, years etc but not for `text` fields that are analyzed for full text search becuase it exists in the inverted index as individual terms and not as the full string.
+
+`http://localhost:9200/movies/movie/_search?sort=title` <- Results in an error because title is of type `text`
+
+There is a way around this which is to keep an non-analyzed copy of the field that you need *both* full text and sorting against. You need to consider this at the mapping/index stage. Here is a mapping example to do this (remember to apply this first DELETE the current movies index, apply this mapping then re-import the movies data!)
+
+```
+curl -H "Content-Type: application/json" -XPUT http://localhost:9200/movies -d '
+{
+	"mappings": {
+		"movie": {
+			"properties": {
+				"id": { "type": "integer"},
+				"year": { "type": "date"},
+				"genre": { "type": "keyword" },
+				"title": { "type": "text", 
+									 "analyzer": "english",
+									 "fields": { "raw": { "type": "keyword" }}}
+			}
+		}
+	}
+}'
+```
+
+With that done the sorting query example will now work using the `title.raw` field as so:
+
+`http://localhost:9200/movies/movie/_search?sort=title.raw`
+
+## Filters revisited
+
+```
+curl -H "Content-Type: application/json" -XGET http://localhost:9200/movies/movie/_search?pretty -d '
+{
+	"query": {
+		"bool": { 
+			"must": { "match": { "genre": "Sci-Fi" } },
+			"must_not": { "match": { "title": "Trek" } },
+			"filter": { "range": { "year": { "gte": 2010, "lt": 2015 } }}
+		}
+	}
+}'
+```
+
+Another example that combines filters and sorting
+
+```
+curl -H "Content-Type: application/json" -XGET http://localhost:9200/movies/movie/_search?pretty -d '
+{
+	"query": {
+		"bool": { 
+			"must": { "match": { "genre": "Sci-Fi" } },
+			"filter": { "range": { "year": { "lt": 1960 } }}
+		}
+	},
+	"sort": "title.raw"
+}'
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
