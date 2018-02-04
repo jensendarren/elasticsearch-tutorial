@@ -206,6 +206,8 @@ curl -H "Content-Type: application/json" -XGET http://localhost:9200/series/movi
 }'
 ```
 
+# Searching in Elasticsearch
+
 ## Query Lite / URI Search
 
 Short hand query syntax - useful for debugging and testing out search. Some examples (whcih can also be executed directly in a browser):
@@ -216,6 +218,99 @@ Short hand query syntax - useful for debugging and testing out search. Some exam
 For more details, refer to the [Elasticsearch URI Search Documentation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-uri-request.html)
 
 **NOTE**: Do not use this approach in Production. It's easy to break, URL may need to be encoded, is a seurity risk, its very fragile.
+
+## Request body JSON search
+
+Things you can do within a query
+
+* Query - need results in order relevance
+* Filters - usually for binary type searches. More efficient and faster since they can be cached.
+
+Below is an example using both a Query and a Filter. 
+
+In the query below we have a `bool` query - which is essentially aloowing us to combine conditions together.
+Within the `bool` query we have `must` which is essentially the equivalend of an `AND` logical query.
+Additionaly within the `bool` query we have a `filter` which further applies a range against the year attribute. 
+
+```
+curl -H "Content-Type: application/json" -XGET http://localhost:9200/movies/movie/_search?pretty -d '
+{
+	"query": {
+		"bool": { 
+			"must": { "term": { "title": "trek" } },
+			"filter": { "range": { "year": { "gte": 2010 } }}
+		}
+	}
+}'
+```
+
+Types of filters:
+
+* `term` filter by exact values `{ "term": { "year": 2014 } }`
+* `terms` match if any exact values in a list match `{"terms": { "genre": ["Sci-Fi", "Adventure"] }}`
+* `range` find numbers or dates in a given range `{ "range": { "year": { "gte": 2010 } }`
+* `exists` find documents where the field exists `{ "exists": { "field": "tags" } }`
+* `missing` find documents where the field is missing `{ "missing": { "field": "tags" } }`
+* `bool` combine filters with Boolean logic (must (logical AND), must_not (logical NOT), should (logical OR))
+
+Types of queries:
+
+* `match` searches analysed results such as full-text `{ "match": { "title": "The Force Awakens" } }`
+* `multi_match` run the same query on multiple fields `{ "multi_match": { "query": "star", "fields": ["title", "synopsis"] }}`
+* `bool` same functionality as with filers but the results are scored by relevance
+
+
+## Phrase search
+
+Use `match_phrase` and, optionally, `slop`. In the following example the search would find the document containing 'quick brown fox' becuase the match_phrase query is 'quick fox' with a slop of 1.
+
+```
+curl -H "Content-Type: application/json" -XGET http://localhost:9200/movies/movie/_search?pretty -d '
+{
+	"query": {
+		"match_phrase": { 
+			"title": { "query": "quick fox", "slop": 1} 
+		}
+	}
+}'
+```
+
+## Proximity query
+
+Let's say you want to find documents and give them a higher relevance when certain words are close together, then set the slop to a high number - like 100, as in this example:
+
+```
+curl -H "Content-Type: application/json" -XGET http://localhost:9200/movies/movie/_search?pretty -d '
+{
+	"query": {
+		"match_phrase": { 
+			"title": { "query": "quick fox", "slop": 100} 
+		}
+	}
+}'
+```
+
+## Pagination
+
+Via a url
+
+`http://localhost:9200/movies/movie/_search?size=4&from=2`
+
+Via the query body
+
+```
+curl -H "Content-Type: application/json" -XGET http://localhost:9200/movies/movie/_search?pretty -d '
+{
+	"from": 2,
+	"size": 2,
+	"query": {
+		"match": { "genre": "Sci-Fi" }
+	}
+}'
+```
+
+
+
 
 
 
