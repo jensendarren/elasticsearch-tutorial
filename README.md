@@ -433,6 +433,22 @@ curl -H "Content-Type: application/json" -XGET http://localhost:9200/movies/movi
 }'
 ```
 
+## Search as you type
+
+Use [match_phrase_prefix](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-match-query-phrase-prefix.html) to match the *phrase* when searching. Add a slop value to allow for differences like word order or exact phase being present.
+
+curl -H "Content-Type: application/json" -XGET http://localhost:9200/movies/movie/_search?pretty -d ' 
+{
+	"query": {
+		"match_phrase_prefix": {
+			"title": {
+				"query": "star trek",
+				"slop": 10 
+			}
+		}
+	}
+}'
+
 
 
 
