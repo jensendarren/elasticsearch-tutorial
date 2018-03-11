@@ -535,4 +535,26 @@ curl -H "Content-Type: application/json" -XGET http://localhost:9200/movies/movi
 	}
 }'
 
+```
+
 Note that for a search term like `star tre` will still return Star Wars as a result. For more control its recommended to use a [Completion Suggester](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-suggesters-completion.html)
+
+## Importing data
+
+Grab the latest movielens dataset and the python script for import:
+
+`wget http://files.grouplens.org/datasets/movielens/ml-latest-small.zip`
+`wget http://media.sundog-soft.com/es/MoviesToJson.py`
+ 
+Extract the ml-latest-small zip file and run the import script
+
+`python3 MoviesToJson.py > moremovies.json`
+
+Then just simply run the bulk data import command as before against the new `moremovies.json` file. After that you will have approx. 10K movies in Elasticsearch to play with!
+
+Now import the ratings and the tags:
+
+`wget http://media.sundog-soft.com/es/IndexRatings.py`
+`wget http://media.sundog-soft.com/es/IndexTags.py`
+`python3 IndexRatings.py`
+`python3 IndexTags.py`
