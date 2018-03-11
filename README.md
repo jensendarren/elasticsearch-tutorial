@@ -433,10 +433,11 @@ curl -H "Content-Type: application/json" -XGET http://localhost:9200/movies/movi
 }'
 ```
 
-## Search as you type
+## Search as you type: Match Phrase Prefix
 
 Use [match_phrase_prefix](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-match-query-phrase-prefix.html) to match the *phrase* when searching. Add a slop value to allow for differences like word order or exact phase being present.
 
+```
 curl -H "Content-Type: application/json" -XGET http://localhost:9200/movies/movie/_search?pretty -d ' 
 {
 	"query": {
@@ -448,12 +449,90 @@ curl -H "Content-Type: application/json" -XGET http://localhost:9200/movies/movi
 		}
 	}
 }'
+```
+## Search as you type: N-Grams
 
+A better way to setup search as you type is to use an edge gram analyzer. 
 
+N-Grams are basically a set of all the letters in each word grouped together and incrementing the count of the letters in each group one at a time.
 
+For example the different N-Grams for the word 'star' is as follows:
+	
+	* unigram:[ s, t, a, r ] 
+	* bigram: [ st, ta, ar ] 
+	* trigram: [ sta, tar ] 
+	* 4-gram:[ star ]
 
+The edge gram analyzer has to be custom made by our self and setup in the following way. 
 
+*NOTE* Delete the movies index before running the examples below!
 
+```
+curl -H "Content-Type: application/json" -XPUT http://localhost:9200/movies?pretty -d  '
+{
+	"settings": {
+		"analysis": {
+			"filter": {
+				"autocomplete_filter": {
+					"type": "edge_ngram",
+					"min_gram": 1, 
+					"max_gram": 20
+				}
+			},
+			"analyzer": {
+				"autocomplete": {
+					"type": "custom", 
+					"tokenizer": "standard", 
+					"filter": [ "lowercase", "autocomplete_filter" ]
+				}
+			}
+		}
+	}
+}'
+```
 
+We can test that our analyser works using the following request:
 
+```
+curl -H "Content-Type: application/json" -XGET http://localhost:9200/movies/_analyze?pretty -d  '
+{
+	"analyzer": "autocomplete",
+	"text": "sta"
+}'
+```
 
+Now we must map our field to that we want search as you type enabled on it to use our new edge gram analyser:
+
+```
+curl -H "Content-Type: application/json" -XPUT http://localhost:9200/movies/_mapping/movie -d  '
+{
+	"movie": {
+		"properties": {
+			"id": { "type": "integer"},
+			"year": { "type": "date"},
+			"genre": { "type": "keyword" },
+			"title": {
+				"type" : "text",
+				"analyzer": "autocomplete"
+			}
+		}
+	}
+}'
+```
+
+Let's test our search like so:
+
+```
+curl -H "Content-Type: application/json" -XGET http://localhost:9200/movies/movie/_search?pretty -d ' 
+{
+	"query": {
+		"match": {
+			"title": {
+				"query": "sta",
+				"analyzer": "standard"
+			}
+		}
+	}
+}'
+
+Note that for a search term like `star tre` will still return Star Wars as a result. For more control its recommended to use a [Completion Suggester](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-suggesters-completion.html)
