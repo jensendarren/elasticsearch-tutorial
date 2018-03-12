@@ -562,3 +562,30 @@ wget http://media.sundog-soft.com/es/IndexTags.py
 python3 IndexRatings.py
 python3 IndexTags.py
 ```
+
+## Logstash
+
+First we need to pull the [Logstash Docker Image](https://www.elastic.co/guide/en/logstash/current/docker.html). I am using the OSS version here:
+
+`docker pull docker.elastic.co/logstash/logstash-oss:6.2.2`
+
+Create a custom `logstash.conf` file as shown [here](./logstash/pipeline/logstash.conf)
+
+Everything is setup to run via docker-compose so like so: `docker-compose up` which will startup an Elasticsearch instance and a logstash instance. The logstash instance will load the config file found in the `logstash/pipline` directory and using that it will load all of our `access_log` data. Check the `docker-compose.yml` file in this repo for details!
+
+When the logstash pipline is finished loading the data you can get a list of indicies in the Elasticsearch cluster:
+
+`curl -XGET 'localhost:9200/_cat/indices?v&pretty`
+
+You should see something output like. This shows that there is a index produced for every day read in by logstash from the access_log file.
+
+```
+health status index                       uuid                   pri rep docs.count docs.deleted store.size pri.store.size
+yellow open   logstash-2017.05.02         VZHKKSpXQ5CzjqUnkrK9eQ   5   1      16278            0      7.5mb          7.5mb
+yellow open   logstash-2017.05.05         H_EX0_r2T2C8njYWQO_ZqA   5   1      18646            0      7.9mb          7.9mb
+yellow open   logstash-2017.04.30         3vSa6kn6Q7OM1P3sSQ0_7g   5   1      14166            0      6.4mb          6.4mb
+yellow open   logstash-2017.05.04         mAo9wxBESOqdL64jmKHMOw   5   1      16762            0      7.4mb          7.4mb
+yellow open   logstash-2017.05.01         Y02x3IZOQiWMVsyG1U0uQA   5   1      15948            0      7.4mb          7.4mb
+yellow open   .monitoring-es-6-2018.03.12 kV_vTtRtQ_6KvUdT5tW_2g   1   1       2381          248      1.8mb          1.8mb
+yellow open   logstash-2017.05.03         ork48LX1TCe-Q1W9dxbWHw   5   1      21172            0      9.4mb          9.4mb
+```
