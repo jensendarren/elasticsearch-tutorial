@@ -563,7 +563,9 @@ python3 IndexRatings.py
 python3 IndexTags.py
 ```
 
-## Logstash
+# Logstash
+
+## Logstash importing Apache log file data
 
 First we need to pull the [Logstash Docker Image](https://www.elastic.co/guide/en/logstash/current/docker.html). I am using the OSS version here:
 
@@ -571,7 +573,7 @@ First we need to pull the [Logstash Docker Image](https://www.elastic.co/guide/e
 
 Create a custom `logstash.conf` file as shown [here](./logstash/pipeline/logstash.conf)
 
-Everything is setup to run via docker-compose so like so: `docker-compose up` which will startup an Elasticsearch instance and a logstash instance. The logstash instance will load the config file found in the `logstash/pipline` directory and using that it will load all of our `access_log` data. Check the `docker-compose.yml` file in this repo for details!
+Everything is setup to run via docker-compose so like so: `docker-compose up` which will startup an Elasticsearch instance and a logstash instance. The logstash instance will load the config file found in the `logstash/pipline` directory and using that it will load all of our `access_log` data. Check the [`docker-compose.yml`](./docker-compose.yml) file in this repo for details!
 
 When the logstash pipline is finished loading the data you can get a list of indicies in the Elasticsearch cluster:
 
@@ -588,4 +590,36 @@ yellow open   logstash-2017.05.04         mAo9wxBESOqdL64jmKHMOw   5   1      16
 yellow open   logstash-2017.05.01         Y02x3IZOQiWMVsyG1U0uQA   5   1      15948            0      7.4mb          7.4mb
 yellow open   .monitoring-es-6-2018.03.12 kV_vTtRtQ_6KvUdT5tW_2g   1   1       2381          248      1.8mb          1.8mb
 yellow open   logstash-2017.05.03         ork48LX1TCe-Q1W9dxbWHw   5   1      21172            0      9.4mb          9.4mb
+```
+
+## Logstash importing MySQL data
+
+First pull down the docker image for MySQL Server:
+
+`docker pull mysql/mysql-server:5.7.20`
+
+Download the dataset:
+
+`wget http://files.grouplens.org/datasets/movielens/ml-100k.zip`
+
+Download the MySQL Java connector so that Logstash can talk to the sevrer.
+
+`wget https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.45.zip`
+
+Start up the server (via `docker-compose up db`) and run the following SQL to create the movielens database, table and load the data from the ml-100k download.
+
+Just connect to the running docker instance and loginto MySQL server directly using the command `mysql -u root -p` (the password is set in the docker-conpose.yml file!)
+
+```
+CREATE DATAABSE movielens;
+
+CREATE TABLE movielens.movies (
+	movieID INT PRIMARY KEY NOT NULL,
+	title TEXT,
+	releaseDate DATE
+);
+
+LOAD DATA LOCAL INFILE '/tmp/data/u.item' INTO TABLE movielens.movies FIELDS TERMINATED BY '|'
+	(movieID, title, @var3)
+	set releaseDate = STR_TO_DATE(@var3, '%d-%M-%Y');
 ```

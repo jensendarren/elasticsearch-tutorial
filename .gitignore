@@ -1,4 +1,5 @@
 /movie-data/*
 /slides/*
+/mysql/*
 
 .DS_Store
