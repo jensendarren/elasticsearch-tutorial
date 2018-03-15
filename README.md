@@ -610,7 +610,15 @@ Start up the server (via `docker-compose up db`) and run the following SQL to cr
 
 Just connect to the running docker instance and loginto MySQL server directly using the command `mysql -u root -p` (the password is set in the docker-conpose.yml file!)
 
+NOTE: Granting user root as we are first in the SQL below is so that we can connect from the Logstash Docker container to the MySQL Docker container. See [here](https://stackoverflow.com/questions/1559955/host-xxx-xx-xxx-xxx-is-not-allowed-to-connect-to-this-mysql-server) for details.
+
 ```
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION;
+
+CREATE USER 'root'@'%' IDENTIFIED BY 'password';
+
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
+
 CREATE DATAABSE movielens;
 
 CREATE TABLE movielens.movies (
@@ -623,3 +631,4 @@ LOAD DATA LOCAL INFILE '/tmp/data/u.item' INTO TABLE movielens.movies FIELDS TER
 	(movieID, title, @var3)
 	set releaseDate = STR_TO_DATE(@var3, '%d-%M-%Y');
 ```
+

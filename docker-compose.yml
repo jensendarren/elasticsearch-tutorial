@@ -23,9 +23,13 @@ services:
     depends_on:
       - elasticsearch
     volumes:
+      # Change which Logstash pipeline to load here by uncommenting ONE of the 'pipeline' volume mounts
+      # - ./logstash/pipeline/file.conf:/usr/share/logstash/pipeline/file.conf
+      # - ./logstash/pipeline/mysql.conf:/usr/share/logstash/pipeline/mysql.conf
+      - ./logstash/pipeline/s3.conf:/usr/share/logstash/pipeline/s3.conf
       - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
-      - ./logstash/pipeline:/usr/share/logstash/pipeline
       - ./logstash/data/access_log:/usr/share/logstash/data/access_log:ro
+      - ./mysql/:/tmp/java
   
   db:
     image: mysql/mysql-server:5.7.20
@@ -35,7 +39,6 @@ services:
       MYSQL_ROOT_PASSWORD: password
     volumes:
       - ./movie-data/ml-100k:/tmp/data
-      - ./mysql/:/tmp/java
     networks:
       - elk
 
