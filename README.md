@@ -2,11 +2,11 @@
 
 Run Elasticsearch in development by first pulling down the Docker Image:
 
-`docker pull docker.elastic.co/elasticsearch/elasticsearch:6.1.3`
+`docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:6.2.2`
 
 Then fire up Elasticsearch using the following Docker command:
 
-`docker run -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" docker.elastic.co/elasticsearch/elasticsearch:6.1.3`
+`docker run -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" docker.elastic.co/elasticsearch/elasticsearch-oss:6.2.2`
 
 Test that all is well:
 
@@ -855,3 +855,21 @@ curl -H "Content-Type: application/json" -XGET 'http://localhost:9200/ratings/ra
 	}
 }'
 ```
+
+# Kibana
+
+First grab the docker image:
+
+`docker pull docker.elastic.co/kibana/kibana-oss:6.2.2`
+
+Then run the following docker-compose command:
+
+`docker-compose up elasticsearch kibana`
+
+Then grab the data for Shakespeare's plays and index that:
+
+`wget http://media.sundog-soft.com/es6/shakespeare_6.0.json`
+
+Import that data into a new Elasticsearch index:
+
+`curl -H "Content-Type: application/json" -XPOST http://localhost:9200/shakespeare/doc/_bulk?pretty --data-binary @shakespeare_6.0.json`
