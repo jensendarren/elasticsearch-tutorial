@@ -803,3 +803,55 @@ curl -H "Content-Type: application/json" -XGET 'http://localhost:9200/logstash-2
 	}
 }'
 ```
+
+## Sub aggregations
+
+If you want to do an aggregation on text / string data you need to have a 'raw' version of that data in your index - otherwise query like the one below will not work!
+
+So first the delete + mapping:
+
+```
+`curl -H "Content-Type: application/json" -XDELETE http://localhost:9200/ratings`
+```
+
+```
+curl -H "Content-Type: application/json" -XPUT 'http://localhost:9200/ratings?pretty' -d ' 
+{
+	"mappings": {
+		"rating": {
+			"properties": {
+				"title": {
+					"type": "text",
+					"fielddata": true,
+					"fields": {
+						"raw": {
+							"type": "keyword"
+						}
+					}
+				}
+			}
+		}
+	}
+}'
+```
+
+```
+curl -H "Content-Type: application/json" -XGET 'http://localhost:9200/ratings/rating/_search?size=0&pretty' -d ' 
+{
+	"query": {
+		"match_phrase": {
+			"title": "Star Wars"
+		}
+	},
+	"aggs": {
+		"titles": {
+			"terms": {
+				"field": "title.raw"
+			},
+			"aggs": {
+				"avg_rating": { "avg": { "field": "rating" } }
+			}
+		}
+	}
+}'
+```
