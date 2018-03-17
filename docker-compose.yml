@@ -32,16 +32,16 @@ services:
       - ./logstash/data/access_log:/usr/share/logstash/data/access_log:ro
       - ./mysql/:/tmp/java
   
-  # db:
-  #   image: mysql/mysql-server:5.7.20
-  #   ports:
-  #     - "3306:3306"
-  #   environment:
-  #     MYSQL_ROOT_PASSWORD: password
-  #   volumes:
-  #     - ./movie-data/ml-100k:/tmp/data
-  #   networks:
-  #     - elk
+  db:
+    image: mysql/mysql-server:5.7.20
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+    volumes:
+      - ./movie-data/ml-100k:/tmp/data
+    networks:
+      - elk
   
   zookeeper:
     image: wurstmeister/zookeeper

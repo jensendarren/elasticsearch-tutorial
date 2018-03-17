@@ -640,12 +640,14 @@ Basically see the [docker-compose.yml](./docker-compose.yml) file and the [s3.co
 
 First pull down the docker image for Apache Kafka and Zookeeper:
 
-`docker pull wurstmeister/kafka:1.0.0`
-`docker pull wurstmeister/zookeeper:latest`
+```
+docker pull wurstmeister/kafka:1.0.0
+docker pull wurstmeister/zookeeper:latest
+```
 
 Make sure to uncomment the kafka.conf line (only) for the logstash entry in the docker-compose file.
 
-Then startup the entire service using `docker-compose up`.
+Then startup the all the set of services (Elasticsearch, Logstash Zookeeper, & Kafka) using `docker-compose up`.
 
 Get a terminal session within the kafka image and run the following command to import all the access_logs into Kafka. Then watch the docker compose output that will indicate logstash picking up these messages from Kafka, parsing them and putting them into Elasticsearch! :)
 
@@ -654,3 +656,94 @@ Get a terminal session within the kafka image and run the following command to i
 Check the index has been created and has some data and we are done.
 
 `http://localhost:9200/access-log-kafka/_search`
+
+# Aggregation with Elasticsearch
+
+## Counts and Averages
+
+Let's try an example where we ask for the aggregation of ratings. It's very similar to SQL `GROUP BY`.
+
+```
+curl -H "Content-Type: application/json" -XGET 'http://localhost:9200/ratings/rating/_search?size=0&pretty' -d ' 
+{
+	"aggs": {
+		"ratings": {
+			"terms": {
+				"field": "rating"
+			}
+		}
+	}
+}'
+```
+
+Another example to find all docs with a rating of 5.0 and agregate by these. This is is simailar to a `WHERE` + `GROUP BY` in SQL.
+
+```
+curl -H "Content-Type: application/json" -XGET 'http://localhost:9200/ratings/rating/_search?size=0&pretty' -d ' 
+{
+	"query": {
+		"match": { "rating": 5.0 }
+	},
+	"aggs": {
+		"ratings": {
+			"terms": {
+				"field": "rating"
+			}
+		}
+	}
+}'
+```
+
+Next example is to get the average ratings for a single movie:
+
+```
+curl -H "Content-Type: application/json" -XGET 'http://localhost:9200/ratings/rating/_search?size=0&pretty' -d ' 
+{
+	"query": {
+		"match_phrase": { "title": "Star Wars Episode IV" }
+	},
+	"aggs": {
+		"avg_ratings": {
+			"avg": {
+				"field": "rating"
+			}
+		}
+	}
+}'
+```
+
+## Histograms and Buckets
+
+Elasticsearch can group data together into 'buckets' which can be easily used to produce histograms. 
+
+So for example if we want to fetch and group all ratings by 1.x, 2.x and so on we can run the following:
+
+```
+curl -H "Content-Type: application/json" -XGET 'http://localhost:9200/ratings/rating/_search?size=0&pretty' -d ' 
+{
+	"aggs" : {
+		"whole_ratings": {
+			"histogram": {
+				"field": "rating",
+				"interval": 1.0
+			}
+		}
+	}
+}'
+```
+
+Now lets see what moveis exist by each decade, e.g. 1980's, 1990's etc.
+
+```
+curl -H "Content-Type: application/json" -XGET 'http://localhost:9200/ratings/rating/_search?size=0&pretty' -d ' 
+{
+	"aggs" : {
+		"release": {
+			"histogram": {
+				"field": "year",
+				"interval": 10
+			}
+		}
+	}
+}'
+```
