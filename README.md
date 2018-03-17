@@ -60,6 +60,7 @@ First download the json file containing the movie set
 
 Then run the following command to import as bulk:
 
+
 `curl -H "Content-Type: application/json" -XPUT http://localhost:9200/_bulk?pretty --data-binary @movies.json`
 
 ## Update a movie
@@ -588,7 +589,6 @@ yellow open   logstash-2017.05.05         H_EX0_r2T2C8njYWQO_ZqA   5   1      18
 yellow open   logstash-2017.04.30         3vSa6kn6Q7OM1P3sSQ0_7g   5   1      14166            0      6.4mb          6.4mb
 yellow open   logstash-2017.05.04         mAo9wxBESOqdL64jmKHMOw   5   1      16762            0      7.4mb          7.4mb
 yellow open   logstash-2017.05.01         Y02x3IZOQiWMVsyG1U0uQA   5   1      15948            0      7.4mb          7.4mb
-yellow open   .monitoring-es-6-2018.03.12 kV_vTtRtQ_6KvUdT5tW_2g   1   1       2381          248      1.8mb          1.8mb
 yellow open   logstash-2017.05.03         ork48LX1TCe-Q1W9dxbWHw   5   1      21172            0      9.4mb          9.4mb
 ```
 
@@ -735,13 +735,69 @@ curl -H "Content-Type: application/json" -XGET 'http://localhost:9200/ratings/ra
 Now lets see what moveis exist by each decade, e.g. 1980's, 1990's etc.
 
 ```
-curl -H "Content-Type: application/json" -XGET 'http://localhost:9200/ratings/rating/_search?size=0&pretty' -d ' 
+curl -H "Content-Type: application/json" -XGET 'http://localhost:9200/movies/movie/_search?size=0&pretty' -d ' 
 {
 	"aggs" : {
 		"release": {
 			"histogram": {
 				"field": "year",
 				"interval": 10
+			}
+		}
+	}
+}'
+```
+
+## Timeseries data analysis
+
+Get all server logs grouped by hour:
+
+```
+curl -H "Content-Type: application/json" -XGET 'http://localhost:9200/logstash-2017.05.02/_search?size=0&pretty' -d '
+{
+	"aggs" : {
+		"timestamp": {
+			"date_histogram": {
+				"field": "@timestamp",
+				"interval": "hour"
+			}
+		}
+	}
+}'
+```
+
+Get all server logs where the agent is 'Googlebot' grouped by hour:
+
+```
+curl -H "Content-Type: application/json" -XGET 'http://localhost:9200/logstash-2017.05.02/_search?size=0&pretty' -d ' 
+{
+	"query": {
+		"match": { "agent": "Googlebot" }
+	},
+	"aggs": {
+		"timestamp": {
+			"date_histogram": {
+				"field": "@timestamp",
+				"interval": "hour"
+			}
+		}
+	}
+}'
+```
+
+When did the site go down on a particular day (say 01st May 2017)?
+
+```
+curl -H "Content-Type: application/json" -XGET 'http://localhost:9200/logstash-2017.05.01/_search?size=0&pretty' -d ' 
+{
+	"query": {
+		"match": { "response": "500" }
+	},
+	"aggs": {
+		"timestamp": {
+			"date_histogram": {
+				"field": "@timestamp",
+				"interval": "minute"
 			}
 		}
 	}

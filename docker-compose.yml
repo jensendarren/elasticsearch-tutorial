@@ -24,10 +24,10 @@ services:
       - elasticsearch
     volumes:
       # Change which Logstash pipeline to load here by uncommenting ONE of the 'pipeline' volume mounts
-      # - ./logstash/pipeline/file.conf:/usr/share/logstash/pipeline/file.conf
+      - ./logstash/pipeline/file.conf:/usr/share/logstash/pipeline/file.conf
       # - ./logstash/pipeline/mysql.conf:/usr/share/logstash/pipeline/mysql.conf
       # - ./logstash/pipeline/s3.conf:/usr/share/logstash/pipeline/s3.conf
-      - ./logstash/pipeline/kafka.conf:/usr/share/logstash/pipeline/kafka.conf
+      # - ./logstash/pipeline/kafka.conf:/usr/share/logstash/pipeline/kafka.conf
       - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
       - ./logstash/data/access_log:/usr/share/logstash/data/access_log:ro
       - ./mysql/:/tmp/java
