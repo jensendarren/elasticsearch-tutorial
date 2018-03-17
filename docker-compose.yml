@@ -26,19 +26,41 @@ services:
       # Change which Logstash pipeline to load here by uncommenting ONE of the 'pipeline' volume mounts
       # - ./logstash/pipeline/file.conf:/usr/share/logstash/pipeline/file.conf
       # - ./logstash/pipeline/mysql.conf:/usr/share/logstash/pipeline/mysql.conf
-      - ./logstash/pipeline/s3.conf:/usr/share/logstash/pipeline/s3.conf
+      # - ./logstash/pipeline/s3.conf:/usr/share/logstash/pipeline/s3.conf
+      - ./logstash/pipeline/kafka.conf:/usr/share/logstash/pipeline/kafka.conf
       - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
       - ./logstash/data/access_log:/usr/share/logstash/data/access_log:ro
       - ./mysql/:/tmp/java
   
-  db:
-    image: mysql/mysql-server:5.7.20
+  # db:
+  #   image: mysql/mysql-server:5.7.20
+  #   ports:
+  #     - "3306:3306"
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: password
+  #   volumes:
+  #     - ./movie-data/ml-100k:/tmp/data
+  #   networks:
+  #     - elk
+  
+  zookeeper:
+    image: wurstmeister/zookeeper
     ports:
-      - "3306:3306"
+      - "2181:2181"
+    networks:
+      - elk
+
+  kafka:
+    image: wurstmeister/kafka:1.0.0
+    ports:
+      - "9092:9092"
     environment:
-      MYSQL_ROOT_PASSWORD: password
+      KAFKA_CREATE_TOPICS: "kafka-logs"
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
     volumes:
-      - ./movie-data/ml-100k:/tmp/data
+      - ./logstash/data:/tmp/data
+    depends_on:
+      - zookeeper
     networks:
       - elk
 

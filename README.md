@@ -577,7 +577,7 @@ Everything is setup to run via docker-compose so like so: `docker-compose up` wh
 
 When the logstash pipline is finished loading the data you can get a list of indicies in the Elasticsearch cluster:
 
-`curl -XGET 'localhost:9200/_cat/indices?v&pretty`
+`curl -XGET localhost:9200/_cat/indices?&pretty`
 
 You should see something output like. This shows that there is a index produced for every day read in by logstash from the access_log file.
 
@@ -632,3 +632,25 @@ LOAD DATA LOCAL INFILE '/tmp/data/u.item' INTO TABLE movielens.movies FIELDS TER
 	set releaseDate = STR_TO_DATE(@var3, '%d-%M-%Y');
 ```
 
+## Logstash importing S3 data
+
+Basically see the [docker-compose.yml](./docker-compose.yml) file and the [s3.conf](./logstash/pipeline/s3.conf) file
+
+## Logstash importing Kafka data
+
+First pull down the docker image for Apache Kafka and Zookeeper:
+
+`docker pull wurstmeister/kafka:1.0.0`
+`docker pull wurstmeister/zookeeper:latest`
+
+Make sure to uncomment the kafka.conf line (only) for the logstash entry in the docker-compose file.
+
+Then startup the entire service using `docker-compose up`.
+
+Get a terminal session within the kafka image and run the following command to import all the access_logs into Kafka. Then watch the docker compose output that will indicate logstash picking up these messages from Kafka, parsing them and putting them into Elasticsearch! :)
+
+`/opt/kafka_2.12-1.0.0/bin/kafka-console-producer.sh --broker-list localhost:9092 --topic kafka-logs < /tmp/data/access_log`
+
+Check the index has been created and has some data and we are done.
+
+`http://localhost:9200/access-log-kafka/_search`
