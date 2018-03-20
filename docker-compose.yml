@@ -9,8 +9,6 @@ services:
       - "9300:9300"
     environment:
       ES_JAVA_OPTS: "-Xmx256m -Xms256m"
-    networks:
-      - elk
 
   logstash:
     image: docker.elastic.co/logstash/logstash-oss:6.2.2
@@ -18,8 +16,6 @@ services:
       - "5000:5000"
     environment:
       LS_JAVA_OPTS: "-Xmx256m -Xms256m"
-    networks:
-      - elk
     depends_on:
       - elasticsearch
     volumes:
@@ -42,8 +38,6 @@ services:
       ELASTICSEARCH_URL: http://elasticsearch:9200
     depends_on:
       - elasticsearch
-    networks:
-      - elk
 
   db:
     image: mysql/mysql-server:5.7.20
@@ -53,15 +47,11 @@ services:
       MYSQL_ROOT_PASSWORD: password
     volumes:
       - ./movie-data/ml-100k:/tmp/data
-    networks:
-      - elk
   
   zookeeper:
     image: wurstmeister/zookeeper
     ports:
       - "2181:2181"
-    networks:
-      - elk
 
   kafka:
     image: wurstmeister/kafka:1.0.0
@@ -74,10 +64,3 @@ services:
       - ./logstash/data:/tmp/data
     depends_on:
       - zookeeper
-    networks:
-      - elk
-
-networks:
-
-  elk:
-    driver: bridge
