@@ -12,7 +12,7 @@ Test that all is well:
 
 `curl http://localhost:9200`
 
-For more details chekc the [Elastic Online Guide](https://www.elastic.co/guide/en/elasticsearch/reference/6.1/docker.html)
+For more details check the [Elastic Online Guide](https://www.elastic.co/guide/en/elasticsearch/reference/6.1/docker.html)
 
 ## Mapping
 
